@@ -128,3 +128,5 @@ redump: redump.c
 zdump: zdump.c
 	gcc -g $(CFLAGS) -Wall -Wno-packed-bitfield-compat -I. $^ -o $@
 
+fwdump: fwdump.c envytools/rnn/librnn.a envytools/util/libenvyutil.a
+	gcc -g $(CFLAGS) -Wall -Wno-packed-bitfield-compat -I. -Ienvytools/include $^ -lxml2 -o $@
