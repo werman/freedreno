@@ -669,6 +669,9 @@ static const char *propnames[] = {
 		PROP_INFO(KGSL_PROP_HIGHEST_BANK_BIT),
 		PROP_INFO(KGSL_PROP_DEVICE_BITNESS),
 		PROP_INFO(KGSL_PROP_DEVICE_QDSS_STM),
+		PROP_INFO(KGSL_PROP_MIN_ACCESS_LENGTH),
+		PROP_INFO(KGSL_PROP_UBWC_MODE),
+		PROP_INFO(KGSL_PROP_DEVICE_QTIMER),
 };
 
 static void kgsl_ioctl_device_getproperty_post(int fd,
@@ -724,6 +727,34 @@ static void kgsl_ioctl_device_getproperty_post(int fd,
 		uint64_t *value = param->value;
 		*value = 0x10000;
 		// TODO probably should return an error for a4xx and prior..
+	} else if (param->type == KGSL_PROP_HIGHEST_BANK_BIT) {
+		uint32_t *value = param->value;
+		*value = 15;    // qcom,highest-bank-bit
+	} else if (param->type == KGSL_PROP_DEVICE_BITNESS) {
+		uint32_t *value = param->value;
+		if (is64b) {
+			*value = 48;
+		} else {
+			*value = 32;
+		}
+	} else if (param->type == KGSL_PROP_UCODE_VERSION) {
+		struct kgsl_ucode_version *ucode = param->value;
+		unsigned gpu_id = wrap_gpu_id();
+		if (gpu_id >= 600) {
+			ucode->pfp = 0x016ee166;  /* SQE version goes in pfp slot */
+			ucode->pm4 = 0;
+		} else {
+			ucode->pfp = 0x005ff110;
+			ucode->pm4 = 0x005ff066;
+		}
+//	} else if (param->type == KGSL_PROP_DEVICE_QDSS_STM) {
+//	} else if (param->type == KGSL_PROP_DEVICE_QTIMER) {
+	} else if (param->type == KGSL_PROP_MIN_ACCESS_LENGTH) {
+		uint32_t *value = param->value;
+		*value = 32;    // qcom,min-access-length
+	} else if (param->type == KGSL_PROP_UBWC_MODE) {
+		uint32_t *value = param->value;
+		*value = 2;     // qcom,ubwc-mode
 #endif
 	}
 	hexdump(param->value, param->sizebytes);
@@ -1079,6 +1110,8 @@ static void kgsl_ioclt_gpuobj_info_post(int fd,
 #ifdef FAKE
 	param->size = buf->len;
 	param->gpuaddr = alloc_gpuaddr(ALIGN(buf->len, 0x1000));
+	param->va_addr = param->gpuaddr;
+	param->va_len = buf->len;
 #endif
 
 	log_gpuaddr(param->gpuaddr, param->size);
