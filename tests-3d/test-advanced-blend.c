@@ -26,6 +26,8 @@
  * logging that I use..
  */
 
+#include <GLES3/gl32.h>
+#include <GLES3/gl3ext.h>
 #include "test-util-3d.h"
 
 #ifndef GL_KHR_blend_equation_advanced
@@ -45,8 +47,41 @@
 #define GL_HSL_SATURATION_KHR             0x92AE
 #define GL_HSL_COLOR_KHR                  0x92AF
 #define GL_HSL_LUMINOSITY_KHR             0x92B0
-GL_APICALL void GL_APIENTRY glBlendBarrierKHR (void);
+typedef void (PFNGLBLENDBARRIERKHRPROC) (void);
 #endif /* GL_KHR_blend_equation_advanced */
+
+#ifndef GL_KHR_blend_equation_advanced_coherent
+#define GL_KHR_blend_equation_advanced_coherent 1
+#define GL_BLEND_ADVANCED_COHERENT_KHR    0x9285
+#endif /* GL_KHR_blend_equation_advanced_coherent */
+
+static const char * blendname(GLenum blend)
+{
+	switch (blend) {
+	default:  break;
+	case 0:   return "none";
+#define ENUM(n) case GL_ ## n ## _KHR: return #n
+	ENUM(MULTIPLY);
+	ENUM(SCREEN);
+	ENUM(OVERLAY);
+	ENUM(DARKEN);
+	ENUM(LIGHTEN);
+	ENUM(COLORDODGE);
+	ENUM(COLORBURN);
+	ENUM(HARDLIGHT);
+	ENUM(SOFTLIGHT);
+	ENUM(DIFFERENCE);
+	ENUM(EXCLUSION);
+	ENUM(HSL_HUE);
+	ENUM(HSL_SATURATION);
+	ENUM(HSL_COLOR);
+	ENUM(HSL_LUMINOSITY);
+#undef ENUM
+	}
+	ERROR_MSG("invalid blend: %04x", blend);
+	exit(1);
+	return NULL;
+}
 
 static EGLint const config_attribute_list[] = {
 	EGL_RED_SIZE, 8,
@@ -82,6 +117,18 @@ const char *vertex_shader_source =
 
 const char *fragment_shader_source =
 		"#version 300 es              \n"
+		"precision highp float;       \n"
+		"                             \n"
+		"in vec4 vColor;              \n"
+		"out vec4 gl_FragColor;       \n"
+		"                             \n"
+		"void main()                  \n"
+		"{                            \n"
+		"    gl_FragColor = vColor;   \n"
+		"}                            \n";
+
+const char *fragment_shader_source_ab =
+		"#version 300 es              \n"
 		"#extension GL_KHR_blend_equation_advanced : enable\n"
 		"precision highp float;       \n"
 		"                             \n"
@@ -93,7 +140,13 @@ const char *fragment_shader_source =
 		"    gl_FragColor = vColor;   \n"
 		"}                            \n";
 
-void test_advanced_blend(GLenum blend)
+/* mode:
+ *   0 - default, two draws
+ *   1 - use glBlendBarrier() between the two draws
+ *   2 - enable GL_BLEND_ADVANCED_COHERENT_KHR
+ */
+
+static void test_advanced_blend(int mode, GLenum blend)
 {
 	GLint width, height;
 
@@ -107,7 +160,7 @@ void test_advanced_blend(GLenum blend)
 			0.0f, 0.0f, 1.0f, 1.0f};
 	EGLSurface surface;
 
-	RD_START("advanced-blend", "");
+	RD_START("advanced-blend", "mode=%u, blend=%s", mode, blendname(blend));
 
 	display = get_display();
 
@@ -118,7 +171,7 @@ void test_advanced_blend(GLenum blend)
 	/* create an EGL rendering context */
 	ECHK(context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attribute_list));
 
-	surface = make_window(display, config, 400, 240);
+	surface = make_window(display, config, 800, 600);
 
 	ECHK(eglQuerySurface(display, surface, EGL_WIDTH, &width));
 	ECHK(eglQuerySurface(display, surface, EGL_HEIGHT, &height));
@@ -128,7 +181,8 @@ void test_advanced_blend(GLenum blend)
 	/* connect the context to the surface */
 	ECHK(eglMakeCurrent(display, surface, surface, context));
 
-	program = get_program(vertex_shader_source, fragment_shader_source);
+	program = get_program(vertex_shader_source,
+			blend ? fragment_shader_source_ab : fragment_shader_source);
 
 	GCHK(glBindAttribLocation(program, 0, "aPosition"));
 	GCHK(glBindAttribLocation(program, 1, "aColor"));
@@ -161,6 +215,17 @@ void test_advanced_blend(GLenum blend)
 	GCHK(glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, vColors));
 	GCHK(glEnableVertexAttribArray(1));
 
+	if (mode == 2) {
+		GCHK(glEnable(GL_BLEND_ADVANCED_COHERENT_KHR));
+	}
+
+	GCHK(glDrawArrays(GL_TRIANGLES, 0, 3));
+
+	if (mode == 1) {
+		PFNGLBLENDBARRIERKHRPROC *glBlendBarrier = eglGetProcAddress("glBlendBarrier");
+		GCHK(glBlendBarrier());
+	}
+
 	GCHK(glDrawArrays(GL_TRIANGLES, 0, 3));
 
 	ECHK(eglSwapBuffers(display, surface));
@@ -176,18 +241,20 @@ void test_advanced_blend(GLenum blend)
 int main(int argc, char *argv[])
 {
 	TEST_START();
-	TEST(test_advanced_blend(0));
-	TEST(test_advanced_blend(GL_MULTIPLY_KHR));
-	TEST(test_advanced_blend(GL_SCREEN_KHR));
-	TEST(test_advanced_blend(GL_OVERLAY_KHR));
-	TEST(test_advanced_blend(GL_DARKEN_KHR));
-	TEST(test_advanced_blend(GL_LIGHTEN_KHR));
-	TEST(test_advanced_blend(GL_COLORDODGE_KHR));
-	TEST(test_advanced_blend(GL_COLORBURN_KHR));
-	TEST(test_advanced_blend(GL_HARDLIGHT_KHR));
-	TEST(test_advanced_blend(GL_SOFTLIGHT_KHR));
-	TEST(test_advanced_blend(GL_DIFFERENCE_KHR));
-	TEST(test_advanced_blend(GL_EXCLUSION_KHR));
+	TEST(test_advanced_blend(0, 0));
+	TEST(test_advanced_blend(2, GL_MULTIPLY_KHR));
+	TEST(test_advanced_blend(1, GL_MULTIPLY_KHR));
+	TEST(test_advanced_blend(0, GL_MULTIPLY_KHR));
+	TEST(test_advanced_blend(0, GL_SCREEN_KHR));
+	TEST(test_advanced_blend(0, GL_OVERLAY_KHR));
+	TEST(test_advanced_blend(0, GL_DARKEN_KHR));
+	TEST(test_advanced_blend(0, GL_LIGHTEN_KHR));
+	TEST(test_advanced_blend(0, GL_COLORDODGE_KHR));
+	TEST(test_advanced_blend(0, GL_COLORBURN_KHR));
+	TEST(test_advanced_blend(0, GL_HARDLIGHT_KHR));
+	TEST(test_advanced_blend(0, GL_SOFTLIGHT_KHR));
+	TEST(test_advanced_blend(0, GL_DIFFERENCE_KHR));
+	TEST(test_advanced_blend(0, GL_EXCLUSION_KHR));
 	TEST_END();
 	return 0;
 }

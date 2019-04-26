@@ -33,6 +33,14 @@
 #include <GLES2/gl2ext.h>
 #endif
 
+#ifndef GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT   0x83F0
+#endif
+
+#ifndef GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT  0x83F1
+#endif
+
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -341,6 +349,8 @@ formatname(GLenum format)
 #ifdef GL_DEPTH_STENCIL
 	ENUM(GL_DEPTH_STENCIL);
 #endif
+	ENUM(GL_COMPRESSED_RGB_S3TC_DXT1_EXT);
+	ENUM(GL_COMPRESSED_RGBA_S3TC_DXT1_EXT);
 	}
 	ERROR_MSG("invalid format: %04x", format);
 	exit(1);
@@ -412,6 +422,8 @@ glStrError(GLenum error)
 	}
 }
 
+#undef ENUM
+
 #ifndef BIONIC
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
@@ -419,6 +431,11 @@ glStrError(GLenum error)
 #endif
 
 static EGLNativeDisplayType native_dpy;
+
+#ifndef EGL_KHR_platform_android
+#define EGL_KHR_platform_android 1
+#define EGL_PLATFORM_ANDROID_KHR          0x3141
+#endif /* EGL_KHR_platform_android */
 
 static EGLDisplay
 get_display(void)
@@ -759,6 +776,15 @@ static inline unsigned int env2u(const char *name)
 	if (!str)
 		return 0;
 	return strtol(str, NULL, 0);
+}
+
+#define MIN2( A, B )   ( (A)<(B) ? (A) : (B) )
+#define MAX2( A, B )   ( (A)>(B) ? (A) : (B) )
+
+static inline unsigned
+u_minify(unsigned value, unsigned levels)
+{
+    return MAX2(1, value >> levels);
 }
 
 #endif /* TEST_UTIL_3D_H_ */
