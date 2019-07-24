@@ -400,6 +400,14 @@ LOCAL_LDLIBS := -llog -lc -ldl -lEGL -lGLESv2
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
+LOCAL_MODULE    := test-tex-msaa
+LOCAL_SRC_FILES := tests-3d/test-tex-msaa.c
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+LOCAL_CFLAGS := -DBIONIC -std=c99
+LOCAL_LDLIBS := -llog -lc -ldl -lEGL -lGLESv3
+include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
 LOCAL_MODULE    := test-tf
 LOCAL_SRC_FILES := tests-3d/test-tf.c
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
