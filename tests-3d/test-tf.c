@@ -81,7 +81,7 @@ const char *vertex_shader_source =
 
 const char *fragment_shader_source =
 		"#version 300 es              \n"
-		"precision mediump float;     \n"
+		"precision highp float;       \n"
 		"in vec4 pos;                 \n"
 		"in vec2 pos2;                \n"
 		"in vec3 pos3;                \n"
@@ -180,16 +180,23 @@ static void test_transform_feedback(int n, int separate)
 		}
 	}
 
+	GLuint query;
+	GCHK(glGenQueries(1, &query));
+
 	//GCHK(glGenTransformFeedbacks(1, &tf));
 	//GCHK(glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tf));
 
-	if (n > 0)
+	if (n > 0) {
+		GCHK(glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN, query));
 		GCHK(glBeginTransformFeedback(GL_POINTS));
+	}
 
 	GCHK(glDrawArrays(GL_POINTS, 0, 4));
 
-	if (n > 0)
+	if (n > 0) {
 		GCHK(glEndTransformFeedback());
+		GCHK(glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN));
+	}
 
 	//ECHK(eglSwapBuffers(display, surface));
 	GCHK(glFlush());
