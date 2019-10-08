@@ -244,13 +244,213 @@ get_shaders(const char *text, size_t text_size, unsigned *num_shaders,
 
 static void setup(void);
 
+
+static void *getpix(unsigned npix)
+{
+	uint32_t *pix = malloc(npix * 4);
+	for (unsigned i = 0; i < npix; i++)
+		pix[i] = i;
+	return pix;
+}
+
+
+
+static int setup_tex2d(int program, const char *name, int unit, int image)
+{
+	int handle, tex;
+
+	handle = glGetUniformLocation(program, name);
+	if (handle >= 0) {
+		GLenum fmt, ifmt, type;
+
+		if (strstr(name, "Shadow")) {
+			fmt = GL_DEPTH_COMPONENT;
+			ifmt = GL_DEPTH_COMPONENT32F;
+			type = GL_FLOAT;
+		} else {
+			fmt = GL_RGBA;
+			ifmt = GL_RGBA8;
+			type = GL_UNSIGNED_BYTE;
+		}
+
+		DEBUG_MSG("setup %s (%s,%s,%s)", name, formatname(fmt), formatname(ifmt), typename(type));
+/*
+lockup:
+dEQP-GLES31.functional.atomic_counter.get_inc_dec.8_counters_1_call_1_thread
+
+
+good:
+dEQP-GLES31.functional.image_load_store.2d.atomic.add_r32i_result
+
+
+bad:
+dEQP-GLES31.functional.image_load_store.2d.atomic.add_r32i_return_value
+dEQP-GLES31.functional.image_load_store.2d_array.atomic.add_r32i_result
+
+
+imageStore(u_returnValues, ivec2(gx, gy), ivec4(
+imageAtomicAdd(u_results, ivec2(gx % 64, gy), (gx*gx + gy*gy + gz*gz))));
+
+imageAtomicAdd(u_results, ivec2(gx % 64, gy), (gx*gx + gy*gy + gz*gz));
+ */
+		glGenTextures(1, &tex);
+
+		glActiveTexture(GL_TEXTURE0 + unit);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		if (image) {
+			glTexStorage2D(GL_TEXTURE_2D, 1, ifmt, 200, 200);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 200, 200, fmt, type, getpix(200 * 200 * 4));
+		} else {
+			glTexImage2D(GL_TEXTURE_2D, 0, ifmt, 200, 200, 0, fmt, type, getpix(200 * 200 * 4));
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, 1);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, 4);
+#ifndef GL_TEXTURE_LOD_BIAS_EXT
+#define GL_TEXTURE_LOD_BIAS_EXT           0x8501
+#endif
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS_EXT, 1);
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+
+		glUniform1i(handle, unit);
+
+		/* clear any errors, just in case: */
+		while (glGetError() != GL_NO_ERROR) {}
+
+#ifdef HAS_GLES31
+		if (image)
+			GCHK(glBindImageTexture(unit, tex, 0, GL_FALSE, 0, GL_READ_WRITE, ifmt));
+#endif
+
+		unit++;
+	}
+
+	return unit;
+}
+
+static int setup_tex3d(int program, const char *name, int unit, int image)
+{
+	int handle, tex;
+
+	handle = glGetUniformLocation(program, name);
+	if (handle >= 0) {
+		GLenum fmt, ifmt, type;
+
+		if (strstr(name, "Shadow")) {
+			fmt = GL_DEPTH_COMPONENT;
+			ifmt = GL_DEPTH_COMPONENT32F;
+			type = GL_FLOAT;
+		} else {
+			fmt = GL_RGBA;
+			ifmt = GL_RGBA8;
+			type = GL_UNSIGNED_BYTE;
+		}
+
+		DEBUG_MSG("setup %s (%s,%s,%s)", name, formatname(fmt), formatname(ifmt), typename(type));
+
+		glGenTextures(1, &tex);
+
+		glActiveTexture(GL_TEXTURE0 + unit);
+		glBindTexture(GL_TEXTURE_3D, tex);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexStorage3D(GL_TEXTURE_3D, 1, ifmt, 32, 32, 32);
+		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 32, 32, 32, fmt, type, getpix(32 * 32 * 32 * 4));
+
+		glUniform1i(handle, unit);
+
+		/* clear any errors, just in case: */
+		while (glGetError() != GL_NO_ERROR) {}
+
+#ifdef HAS_GLES31
+		if (image)
+			GCHK(glBindImageTexture(unit, tex, 0, GL_TRUE, 0, GL_READ_WRITE, ifmt));
+#endif
+
+		unit++;
+	}
+
+	return unit;
+}
+
+static int setup_texcube(int program, const char *name, int unit)
+{
+	int handle, tex;
+
+	handle = glGetUniformLocation(program, name);
+	if (handle >= 0) {
+		DEBUG_MSG("setup %s", name);
+
+		glGenTextures(1, &tex);
+
+		glActiveTexture(GL_TEXTURE0 + unit);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA32F, 200, 200, 0, GL_RGBA, GL_FLOAT, getpix(200 * 200 * 4));
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA32F, 200, 200, 0, GL_RGBA, GL_FLOAT, getpix(200 * 200 * 4));
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA32F, 200, 200, 0, GL_RGBA, GL_FLOAT, getpix(200 * 200 * 4));
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA32F, 200, 200, 0, GL_RGBA, GL_FLOAT, getpix(200 * 200 * 4));
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA32F, 200, 200, 0, GL_RGBA, GL_FLOAT, getpix(200 * 200 * 4));
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA32F, 200, 200, 0, GL_RGBA, GL_FLOAT, getpix(200 * 200 * 4));
+
+		glUniform1i(handle, unit);
+
+		unit++;
+	}
+
+	return unit;
+}
+
+static void setup_textures(GLint program)
+{
+	int unit = 0;
+
+	unit = setup_tex2d(program, "uTexture2D", unit, 0);
+	unit = setup_tex2d(program, "uTex2ShadowD0", unit, 0);
+	unit = setup_tex2d(program, "uTex2D0",    unit, 0);
+	unit = setup_tex2d(program, "uTex2D1",    unit, 0);
+	unit = setup_tex2d(program, "uTex2D2",    unit, 0);
+	unit = setup_tex2d(program, "uTex2D3",    unit, 0);
+	unit = setup_tex2d(program, "uTex2D4",    unit, 0);
+	unit = setup_tex2d(program, "uTex2D5",    unit, 0);
+	unit = setup_tex3d(program, "uTexture3D", unit, 0);
+	unit = setup_tex3d(program, "uTex3D0",    unit, 0);
+	unit = setup_tex3d(program, "uTex3D1",    unit, 0);
+	unit = setup_texcube(program, "uTexCube0", unit);
+	unit = setup_texcube(program, "uTexCube1", unit);
+	unit = setup_texcube(program, "uTexCube2", unit);
+	unit = setup_texcube(program, "uTexCube3", unit);
+
+	unit = setup_tex2d(program, "uImage2D0",  unit, 1);
+	unit = setup_tex2d(program, "uImage2D1",  unit, 1);
+	unit = setup_tex3d(program, "uImage3D0",  unit, 1);
+	unit = setup_tex3d(program, "uImage3D1",  unit, 1);
+
+	// TODO other texture types..
+}
+
+
 static int test_compiler(const char *path)
 {
 	static int nattr = 0;
 	int fd;
 	int i, ret;
 
-	RD_START("shader-runner", "%s", path);
+	char *name = getenv("TESTNAME");
+	if (!name)
+		name = "shader-runner";
+
+	RD_START(name, "%s", path);
 
 	fd = open(path, 0);
 	if (fd == -1) {
@@ -311,11 +511,13 @@ static int test_compiler(const char *path)
 
 	link_program(prog);
 
+	setup_textures(prog);
+
 	/* clear any errors, just in case: */
 	while (glGetError() != GL_NO_ERROR) {}
 
 
-	GCHK(glDrawArrays(GL_POINTS, 0, VTX_CNT));
+	GCHK(glDrawArrays(GL_TRIANGLE_STRIP, 0, VTX_CNT));
 
 	readback();
 
