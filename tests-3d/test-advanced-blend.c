@@ -93,6 +93,17 @@ static EGLint const config_attribute_list[] = {
 	EGL_NONE
 };
 
+static EGLint const config_attribute_list_msaa[] = {
+	EGL_RED_SIZE, 8,
+	EGL_GREEN_SIZE, 8,
+	EGL_BLUE_SIZE, 8,
+	EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+	EGL_DEPTH_SIZE, 8,
+	EGL_SAMPLES, 4,
+	EGL_NONE
+};
+
 static const EGLint context_attribute_list[] = {
 	EGL_CONTEXT_CLIENT_VERSION, 2,
 	EGL_NONE
@@ -127,17 +138,46 @@ const char *fragment_shader_source =
 		"    gl_FragColor = vColor;   \n"
 		"}                            \n";
 
+const char *fragment_shader_source_tex =
+		"#version 300 es              \n"
+		"precision highp float;       \n"
+		"                             \n"
+		"in vec4 vColor;              \n"
+		"uniform sampler2D uTex2D0;   \n"
+		"out vec4 gl_FragColor;       \n"
+		"                             \n"
+		"void main()                  \n"
+		"{                            \n"
+		"    gl_FragColor = texture(uTex2D0, vColor.xy);\n"
+		"    gl_FragColor += vColor;  \n"
+		"}                            \n";
+
 const char *fragment_shader_source_ab =
 		"#version 300 es              \n"
 		"#extension GL_KHR_blend_equation_advanced : enable\n"
 		"precision highp float;       \n"
 		"                             \n"
 		"in vec4 vColor;              \n"
-		"layout(blend_support_all_equations) out vec4 gl_FragColor;       \n"
+		"layout(blend_support_all_equations) out vec4 gl_FragColor;\n"
 		"                             \n"
 		"void main()                  \n"
 		"{                            \n"
 		"    gl_FragColor = vColor;   \n"
+		"}                            \n";
+
+const char *fragment_shader_source_ab_tex =
+		"#version 300 es              \n"
+		"#extension GL_KHR_blend_equation_advanced : enable\n"
+		"precision highp float;       \n"
+		"                             \n"
+		"in vec4 vColor;              \n"
+		"uniform sampler2D uTex2D0;   \n"
+		"layout(blend_support_all_equations) out vec4 gl_FragColor;\n"
+		"                             \n"
+		"void main()                  \n"
+		"{                            \n"
+		"    gl_FragColor = texture(uTex2D0, vColor.xy);\n"
+		"    gl_FragColor += vColor;  \n"
 		"}                            \n";
 
 /* mode:
@@ -149,6 +189,7 @@ const char *fragment_shader_source_ab =
 static void test_advanced_blend(int mode, GLenum blend)
 {
 	GLint width, height;
+	GLint handle;
 
 	GLfloat vVertices[] = {
 			 0.0f,  0.5f, 0.0f,
@@ -160,12 +201,22 @@ static void test_advanced_blend(int mode, GLenum blend)
 			0.0f, 0.0f, 1.0f, 1.0f};
 	EGLSurface surface;
 
-	RD_START("advanced-blend", "mode=%u, blend=%s", mode, blendname(blend));
+	if (env2u("MSAA")) {
+		RD_START("advanced-blend-msaa", "mode=%u, blend=%s", mode, blendname(blend));
+	} else if (env2u("TEX")) {
+		RD_START("advanced-blend-tex", "mode=%u, blend=%s", mode, blendname(blend));
+	} else {
+		RD_START("advanced-blend", "mode=%u, blend=%s", mode, blendname(blend));
+	}
 
 	display = get_display();
 
 	/* get an appropriate EGL frame buffer configuration */
-	ECHK(eglChooseConfig(display, config_attribute_list, &config, 1, &num_config));
+	if (env2u("MSAA")) {
+		ECHK(eglChooseConfig(display, config_attribute_list_msaa, &config, 1, &num_config));
+	} else {
+		ECHK(eglChooseConfig(display, config_attribute_list, &config, 1, &num_config));
+	}
 	DEBUG_MSG("num_config: %d", num_config);
 
 	/* create an EGL rendering context */
@@ -181,13 +232,37 @@ static void test_advanced_blend(int mode, GLenum blend)
 	/* connect the context to the surface */
 	ECHK(eglMakeCurrent(display, surface, surface, context));
 
-	program = get_program(vertex_shader_source,
-			blend ? fragment_shader_source_ab : fragment_shader_source);
+	if (env2u("TEX")) {
+		program = get_program(vertex_shader_source,
+				blend ? fragment_shader_source_ab_tex : fragment_shader_source_tex);
+	} else {
+		program = get_program(vertex_shader_source,
+				blend ? fragment_shader_source_ab : fragment_shader_source);
+	}
 
 	GCHK(glBindAttribLocation(program, 0, "aPosition"));
 	GCHK(glBindAttribLocation(program, 1, "aColor"));
 
 	link_program(program);
+
+	if (env2u("TEX")) {
+		GLint handle, tex;
+
+		GCHK(handle = glGetUniformLocation(program, "uTex2D0"));
+		GCHK(glGenTextures(1, &tex));
+
+		GCHK(glActiveTexture(GL_TEXTURE0));
+		GCHK(glBindTexture(GL_TEXTURE_2D, tex));
+		GCHK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+		GCHK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+		GCHK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GCHK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+		GCHK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 200, 200, 0, GL_RGBA, GL_UNSIGNED_BYTE, malloc(200 * 200 * 4)));
+		GCHK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, 1));
+		GCHK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, 4));
+
+		GCHK(glUniform1i(handle, 0));
+	}
 
 	DEBUG_MSG("GL Version %s", glGetString(GL_VERSION));
 	DEBUG_MSG("GL Extensions \"%s\"", glGetString(GL_EXTENSIONS));
