@@ -355,7 +355,7 @@ int open(const char* path, int flags, ...)
 	int ret;
 	PROLOG(open);
 
-	if (flags & O_CREAT) {
+	if (flags & (O_CREAT | O_TMPFILE)) {
 		va_list args;
 
 		va_start(args, flags);
@@ -378,6 +378,87 @@ int open(const char* path, int flags, ...)
 		}
 #else
 		ret = orig_open(path, flags);
+#endif
+	}
+
+	LOCK();
+
+	if (ret != -1) {
+		ret = install_fd(path, ret);
+	}
+
+	UNLOCK();
+
+	return ret;
+}
+
+int openat(int dirfd, const char *path, int flags, ...)
+{
+	mode_t mode = 0;
+	int ret;
+	PROLOG(openat);
+
+	if (flags & (O_CREAT | O_TMPFILE)) {
+		va_list args;
+
+		va_start(args, flags);
+		mode = (mode_t) va_arg(args, int);
+		va_end(args);
+
+		ret = orig_openat(dirfd, path, flags, mode);
+	} else {
+#ifdef FAKE
+		const char *actual_path = path;
+		if (access(path, F_OK) && (path == strstr(path, "/dev/"))) {
+			/* fake non-existant device files: */
+			printf("emulating: %s\n", path);
+			actual_path = "/dev/null";
+		}
+		ret = orig_openat(dirfd, actual_path, flags);
+		if ((ret != -1) && (path != actual_path)) {
+			assert(ret < ARRAY_SIZE(file_table));
+			file_table[ret].is_emulated = 1;
+		}
+#else
+		ret = orig_openat(dirfd, path, flags);
+#endif
+	}
+
+	LOCK();
+
+	if (ret != -1) {
+		ret = install_fd(path, ret);
+	}
+
+	UNLOCK();
+
+	return ret;
+}
+
+int __openat(int dirfd, const char *path, int flags, int mode)
+{
+	int ret;
+	PROLOG(__openat);
+
+	printf("openat: path: %s\n", path);
+
+	if (flags & (O_CREAT | O_TMPFILE)) {
+		ret = orig___openat(dirfd, path, flags, mode);
+	} else {
+#ifdef FAKE
+		const char *actual_path = path;
+		if (access(path, F_OK) && (path == strstr(path, "/dev/"))) {
+			/* fake non-existant device files: */
+			printf("emulating: %s\n", path);
+			actual_path = "/dev/null";
+		}
+		ret = orig___openat(dirfd, actual_path, flags, mode);
+		if ((ret != -1) && (path != actual_path)) {
+			assert(ret < ARRAY_SIZE(file_table));
+			file_table[ret].is_emulated = 1;
+		}
+#else
+		ret = orig___openat(dirfd, path, flags, mode);
 #endif
 	}
 

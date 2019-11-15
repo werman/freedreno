@@ -28,12 +28,7 @@
 #  include <dlfcn.h>
 #endif
 
-#define USE_PTHREADS
-#ifdef USE_PTHREADS
-/* big hack: */
-#  define _PTHREAD_H 1
-#  define _BITS_PTHREADTYPES_H 1
-#endif
+//#define USE_PTHREADS
 
 #include <stdarg.h>
 #include <stddef.h>
