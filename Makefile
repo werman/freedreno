@@ -62,6 +62,11 @@ CFLAGS = -Iincludes -Iutil
 #            normal gnu dynamic loader
 BUILD ?= bionic
 
+# Window System (only used for BUILD == glibc):
+# x11     - build for X11
+# wayland - build for wayland
+WINDOW_SYSTEM ?= x11
+
 ifeq ($(strip $(BUILD)),bionic)
 # Note: setup symlinks in /system/lib to the vendor specific .so's in
 # /system/lib/egl because android's dynamic linker can't seem to cope
@@ -79,11 +84,18 @@ LD = ld --entry=_start -nostdlib --dynamic-linker /system/bin/linker -rpath /sys
 # headers/libs:
 WRAP_C2D2 = wrap-c2d2.o
 else ifeq ($(strip $(BUILD)),glibc)
+
+ifeq ($(strip $(WINDOW_SYSTEM)),x11)
+CFLAGS += -DSUPPORT_X11
+LDFLAGS_MISC = -lX11 -lm
+else ifeq ($(strip $(WINDOW_SYSTEM)),wayland)
+CFLAGS += -DSUPPORT_WAYLAND
+LDFLAGS_MISC = -lwayland-client -lm
+endif
+
 LFLAGS_3D = -lEGL -lGLESv2
 LFLAGS_2D =
 #LFLAGS_CL = -lOpenCL
-LDFLAGS_MISC = -lX11 -lm
-CFLAGS += -DSUPPORT_X11
 CC = gcc -L /usr/lib
 LD = gcc -L /usr/lib
 WRAP_C2D2 =
