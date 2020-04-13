@@ -424,13 +424,21 @@ glStrError(GLenum error)
 
 #undef ENUM
 
-#ifndef BIONIC
+#if defined(SUPPORT_X11)
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
 #  include <X11/keysym.h>
+#elif defined(SUPPORT_WAYLAND)
+#  include <wayland-server.h>
+#  include <wayland-client-protocol.h>
+#  include <wayland-egl.h>
 #endif
 
+#if defined(SUPPORT_WAYLAND)
+static struct wl_display *wl_display;
+#else
 static EGLNativeDisplayType native_dpy;
+#endif
 
 #ifndef EGL_KHR_platform_android
 #define EGL_KHR_platform_android 1
@@ -443,12 +451,16 @@ get_display(void)
 	EGLDisplay display;
 	EGLint egl_major, egl_minor;
 
-#ifdef BIONIC
+#if defined(BIONIC)
 	native_dpy = EGL_DEFAULT_DISPLAY;
+	display = eglGetDisplay(native_dpy);
+#elif defined(SUPPORT_WAYLAND)
+	wl_display = wl_display_connect(NULL);
+	display = eglGetDisplay((EGLNativeDisplayType) wl_display);
 #else
 	native_dpy = XOpenDisplay(NULL);
-#endif
 	display = eglGetDisplay(native_dpy);
+#endif
 	if (display == EGL_NO_DISPLAY) {
 		ERROR_MSG("No display found!");
 		exit(-1);
@@ -466,10 +478,48 @@ get_display(void)
 	return display;
 }
 
+#if defined(SUPPORT_WAYLAND)
+static struct wl_compositor *compositor;
+static struct wl_shell *shell;
+
+static void global_registry_handler(void *data, struct wl_registry *registry, uint32_t id,
+									const char *interface, uint32_t version)
+{
+	if (strcmp(interface, "wl_compositor") == 0)
+		compositor = wl_registry_bind(registry, id, &wl_compositor_interface, 1);
+	else if (strcmp(interface, "wl_shell") == 0)
+		shell = wl_registry_bind(registry, id, &wl_shell_interface, 1);
+}
+
+static void global_registry_remover(void *data, struct wl_registry *registry, uint32_t id)
+{
+
+}
+
+static const struct wl_registry_listener registry_listener = {
+	global_registry_handler,
+	global_registry_remover
+};
+
+static void get_server_references()
+{
+	struct wl_registry *wl_registry = wl_display_get_registry(wl_display);
+	wl_registry_add_listener(wl_registry, &registry_listener, NULL);
+
+	wl_display_dispatch(wl_display);
+	wl_display_roundtrip(wl_display);
+
+	if (compositor == NULL || shell == NULL) {
+		ERROR_MSG("Can't find compositor or shell");
+		exit(-1);
+	}
+}
+#endif
+
 static EGLSurface make_window(EGLDisplay display, EGLConfig config, int width, int height)
 {
 	EGLSurface surface;
-#ifdef BIONIC
+#if defined(BIONIC)
 	EGLint pbuffer_attribute_list[] = {
 		EGL_WIDTH, width,
 		EGL_HEIGHT, height,
@@ -477,6 +527,29 @@ static EGLSurface make_window(EGLDisplay display, EGLConfig config, int width, i
 		EGL_NONE
 	};
 	ECHK(surface = eglCreatePbufferSurface(display, config, pbuffer_attribute_list));
+#elif defined(SUPPORT_WAYLAND)
+	struct wl_surface *compositor_surface;
+	struct wl_shell_surface *shell_surface;
+	struct wl_egl_window *egl_window;
+
+	get_server_references();
+
+	compositor_surface = wl_compositor_create_surface(compositor);
+	if (compositor_surface == NULL) {
+		ERROR_MSG("Can't create surface");
+		exit(-1);
+	}
+
+	shell_surface = wl_shell_get_shell_surface(shell, compositor_surface);
+	wl_shell_surface_set_toplevel(shell_surface);
+
+	egl_window = wl_egl_window_create(compositor_surface, width, height);
+	if (egl_window == EGL_NO_SURFACE) {
+		ERROR_MSG("Can't create egl window");
+		exit(-1);
+	}
+
+	surface = eglCreateWindowSurface(display, config, egl_window, NULL);
 #else
 	XVisualInfo *visInfo, visTemplate;
 	int num_visuals;
