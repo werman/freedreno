@@ -424,7 +424,7 @@ glStrError(GLenum error)
 
 #undef ENUM
 
-#ifndef BIONIC
+#if defined(SUPPORT_X11)
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
 #  include <X11/keysym.h>
