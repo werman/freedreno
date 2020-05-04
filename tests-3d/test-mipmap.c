@@ -56,7 +56,7 @@ static GLint offsetLoc;
 static GLuint textureId;
 static GLint width, height;
 
-static GLbyte vShaderStr[] =
+static const char *vShaderStr =
    "uniform float u_offset;      \n"
    "attribute vec4 a_position;   \n"
    "attribute vec2 a_texCoord;   \n"
@@ -68,7 +68,7 @@ static GLbyte vShaderStr[] =
    "   v_texCoord = a_texCoord;  \n"
    "}                            \n";
 
-static GLbyte fShaderStr[] =
+static const char *fShaderStr =
    "precision mediump float;                            \n"
    "varying vec2 v_texCoord;                            \n"
    "uniform sampler2D s_texture;                        \n"

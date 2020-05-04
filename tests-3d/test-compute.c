@@ -187,7 +187,7 @@ static void test_compute(int x, int y, int z, int ngroup, const char *id)
 		/* indirect dispatch */
 		int cnt = -ngroup;
 		PFNGLDISPATCHCOMPUTEINDIRECTPROC glDispatchComputeIndirect =
-				eglGetProcAddress("glDispatchComputeIndirect");
+			(PFNGLDISPATCHCOMPUTEINDIRECTPROC)eglGetProcAddress("glDispatchComputeIndirect");
 		struct {
 			uint32_t num_groups_x;
 			uint32_t num_groups_y;
@@ -208,7 +208,8 @@ static void test_compute(int x, int y, int z, int ngroup, const char *id)
 		GCHK(glDispatchComputeIndirect((GLintptr)(cnt * 4)));
 	} else {
 		/* direct dispatch */
-		PFNGLDISPATCHCOMPUTEPROC glDispatchCompute = eglGetProcAddress("glDispatchCompute");
+		PFNGLDISPATCHCOMPUTEPROC glDispatchCompute =
+			(PFNGLDISPATCHCOMPUTEPROC)eglGetProcAddress("glDispatchCompute");
 		GCHK(glDispatchCompute(1 * ngroup, 2 * ngroup, 3 * ngroup));
 	}
 

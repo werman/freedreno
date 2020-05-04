@@ -132,7 +132,7 @@ void test_perf(int n, int w, int h)
 		GCHK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 	}
 
-#define getproc(type, name)  type name = eglGetProcAddress(#name)
+#define getproc(type, name)  type name = (type)eglGetProcAddress(#name)
 
 	getproc(PFNGLGETPERFMONITORGROUPSAMDPROC, glGetPerfMonitorGroupsAMD);
 	getproc(PFNGLGETPERFMONITORCOUNTERSAMDPROC, glGetPerfMonitorCountersAMD);
@@ -155,7 +155,7 @@ void test_perf(int n, int w, int h)
 
 	for (int i = 0 ; i < num_groups; i++ ) {
 		GLint num_counters, max_active_counters;
-		GLint *counters;
+		GLuint *counters;
 		char name[256];
 
 		GCHK(glGetPerfMonitorCountersAMD(groups[i], &num_counters,
@@ -205,7 +205,7 @@ void test_perf(int n, int w, int h)
 				DEBUG_MSG("#########         range: %u..%u\n", ((uint32_t *)counter_range)[0], ((uint32_t *)counter_range)[1]);
 				break;
 			case GL_UNSIGNED_INT64_AMD:
-				DEBUG_MSG("#########         range: %llx..%llx\n", ((uint64_t *)counter_range)[0], ((uint64_t *)counter_range)[1]);
+				DEBUG_MSG("#########         range: %llx..%llx\n", (long long)((uint64_t *)counter_range)[0], (long long)((uint64_t *)counter_range)[1]);
 				break;
 			case GL_PERCENTAGE_AMD:
 			case GL_FLOAT:

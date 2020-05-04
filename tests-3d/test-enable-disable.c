@@ -182,11 +182,11 @@ int main(int argc, char *argv[])
 	TEST(test_enable_disable(GL_BLEND, glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_CONSTANT_COLOR)));
 	TEST(test_enable_disable(GL_BLEND, glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA)));
 	TEST(test_enable_disable(GL_BLEND, glBlendFunc(GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR)));
-	TEST(test_enable_disable(GL_SAMPLE_ALPHA_TO_COVERAGE, 0));
+	TEST(test_enable_disable(GL_SAMPLE_ALPHA_TO_COVERAGE, (void)0));
 //	TEST(test_enable_disable(GL_ALPHA_TEST_QCOM, glAlphaFuncQCOM(GL_ALWAYS, 0.5)));
 //	TEST(test_enable_disable(GL_ALPHA_TEST_QCOM, glAlphaFuncQCOM(GL_LEQUAL, 0.5)));
-	TEST(test_enable_disable(GL_SAMPLE_COVERAGE, 0));
-	TEST(test_enable_disable(GL_STENCIL_TEST, 0));
+	TEST(test_enable_disable(GL_SAMPLE_COVERAGE, (void)0));
+	TEST(test_enable_disable(GL_STENCIL_TEST, (void)0));
 	TEST(test_enable_disable(GL_DEPTH_TEST, glDepthFunc(GL_NEVER)));
 	TEST(test_enable_disable(GL_DEPTH_TEST, glDepthFunc(GL_LESS)));
 	TEST(test_enable_disable(GL_DEPTH_TEST, glDepthFunc(GL_EQUAL)));
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 	TEST(test_enable_disable(GL_DEPTH_TEST, glDepthFunc(GL_NOTEQUAL)));
 	TEST(test_enable_disable(GL_DEPTH_TEST, glDepthFunc(GL_GEQUAL)));
 	TEST(test_enable_disable(GL_DEPTH_TEST, glDepthFunc(GL_ALWAYS)));
-	TEST(test_enable_disable(GL_DITHER, 0));
+	TEST(test_enable_disable(GL_DITHER, (void)0));
 	TEST_END();
 
 	ECHK(eglTerminate(display));
