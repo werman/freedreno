@@ -113,7 +113,7 @@ static void *pixels(unsigned char val, int sz)
 {
 	void *p = malloc(sz);
 	memset(p, val, sz);
-	return sz;
+	return p;
 }
 
 static unsigned
