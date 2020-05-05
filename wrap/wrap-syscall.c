@@ -1364,7 +1364,7 @@ int ioctl(int fd, int request, ...)
 	if (get_kgsl_info(fd))
 		kgsl_ioctl_pre(fd, request, ptr);
 	else
-		printf("> [%4d]         : <unknown> (%08lx)\n", fd, request);
+		printf("> [%4d]         : <unknown> (%08lx)\n", fd, (long)request);
 
 	if ((_IOC_NR(request) == _IOC_NR(IOCTL_KGSL_RINGBUFFER_ISSUEIBCMDS)) &&
 			get_kgsl_info(fd) && wrap_safe()) {
@@ -1397,7 +1397,7 @@ int ioctl(int fd, int request, ...)
 	if (get_kgsl_info(fd))
 		kgsl_ioctl_post(fd, request, ptr, ret);
 	else
-		printf("< [%4d]         : <unknown> (%08lx) (%d)\n", fd, request, ret);
+		printf("< [%4d]         : <unknown> (%08lx) (%d)\n", fd, (long)request, ret);
 
 	UNLOCK();
 

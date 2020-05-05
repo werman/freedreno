@@ -257,7 +257,8 @@ static void *getpix(unsigned npix)
 
 static int setup_tex2d(int program, const char *name, int unit, int image)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -333,7 +334,8 @@ imageAtomicAdd(u_results, ivec2(gx % 64, gy), (gx*gx + gy*gy + gz*gz));
 
 static int setup_tex3d(int program, const char *name, int unit, int image)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -381,7 +383,8 @@ static int setup_tex3d(int program, const char *name, int unit, int image)
 
 static int setup_texcube(int program, const char *name, int unit)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {

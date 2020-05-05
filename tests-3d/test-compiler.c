@@ -111,7 +111,8 @@ static void *getpix(unsigned npix)
 
 static int setup_tex2d(int program, const char *name, int unit, int image)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -157,7 +158,8 @@ static int setup_tex2d(int program, const char *name, int unit, int image)
 
 static int setup_tex3d(int program, const char *name, int unit, int image)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -193,7 +195,8 @@ static int setup_tex3d(int program, const char *name, int unit, int image)
 
 static int setup_texcube(int program, const char *name, int unit)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -372,7 +375,7 @@ link:
 	if (tes_fd >= 0) {
 		GCHK(glDrawArrays(0x000E/*GL_PATCHES*/, 0, NVERT));
 	} else if (cs_fd >= 0) {
-		PFNGLDISPATCHCOMPUTEPROC glDispatchCompute = eglGetProcAddress("glDispatchCompute");
+		PFNGLDISPATCHCOMPUTEPROC glDispatchCompute = (PFNGLDISPATCHCOMPUTEPROC)eglGetProcAddress("glDispatchCompute");
 		GCHK(glDispatchCompute(1, 2, 3));
 	} else {
 		GCHK(glDrawArrays(GL_POINTS, 0, NVERT));

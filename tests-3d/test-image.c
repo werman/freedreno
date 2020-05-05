@@ -114,7 +114,8 @@ static void getfmt(const char *format, GLenum *fmt, GLenum *ifmt, GLenum *type)
 static int setup_texbuf(int program, const char *name, const char *format,
 		int unit, int w)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -142,7 +143,8 @@ static int setup_texbuf(int program, const char *name, const char *format,
 static int setup_tex2d(int program, const char *name, const char *format,
 		int unit, int w, int h)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -175,7 +177,8 @@ static int setup_tex2d(int program, const char *name, const char *format,
 static int setup_tex3d(int program, const char *name, const char *format,
 		int unit, int w, int h, int d)
 {
-	int handle, tex;
+	int handle;
+	GLuint tex;
 
 	handle = glGetUniformLocation(program, name);
 	if (handle >= 0) {
@@ -385,7 +388,8 @@ static void test_image(int atomic, int w, int h, int d,
 	unit = setup_texture(program, unit, "dst", dst_type, dst_fmt, w, h, d);
 
 	/* dispatch computation */
-	PFNGLDISPATCHCOMPUTEPROC glDispatchCompute = eglGetProcAddress("glDispatchCompute");
+	PFNGLDISPATCHCOMPUTEPROC glDispatchCompute =
+		(PFNGLDISPATCHCOMPUTEPROC)eglGetProcAddress("glDispatchCompute");
 	GCHK(glDispatchCompute(2, 2, 2));
 
 	DEBUG_MSG("Compute shader dispatched and finished successfully\n");

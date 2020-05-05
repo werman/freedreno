@@ -99,7 +99,7 @@ static char * get_fs(int cnt)
 static void test(int vsz, int fsz)
 {
 	GLint width, height;
-	GLuint textures[2], texture_handle;
+	GLuint tex, texture_handle;
 	GLfloat vVertices[] = {
 			// front
 			-0.45, -0.75, 0.0,
@@ -159,10 +159,10 @@ static void test(int vsz, int fsz)
 	GCHK(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vVertices));
 	GCHK(glEnableVertexAttribArray(0));
 
-	GCHK(glGenTextures(1, &textures));
+	GCHK(glGenTextures(1, &tex));
 
 	GCHK(glActiveTexture(GL_TEXTURE0));
-	GCHK(glBindTexture(GL_TEXTURE_2D, textures[0]));
+	GCHK(glBindTexture(GL_TEXTURE_2D, tex));
 
 	GCHK(glTexImage2D(
 			GL_TEXTURE_2D, 0, GL_RGB,

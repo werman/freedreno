@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
 
 #define __user
 #include "kgsl_drm.h"

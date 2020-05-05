@@ -113,7 +113,7 @@ static void *pixels(unsigned char val, int sz)
 {
 	void *p = malloc(sz);
 	memset(p, val, sz);
-	return sz;
+	return p;
 }
 
 static unsigned
@@ -139,7 +139,7 @@ levels2d(int w, int h)
 	return ~0;
 }
 
-static void upload_tex(struct dim *d, struct fmt *f)
+static void upload_tex(const struct dim *d, const struct fmt *f)
 {
 	int bpc = fmt2components(f->fmt) * fmt2bpp(f->type);
 	int w = d->w;
@@ -178,7 +178,7 @@ static void upload_tex(struct dim *d, struct fmt *f)
 	}
 }
 
-static void test(struct dim *d, struct fmt *f)
+static void test(const struct dim *d, const struct fmt *f)
 {
 	GLint width, height;
 	GLint modelviewmatrix_handle, modelviewprojectionmatrix_handle, normalmatrix_handle;

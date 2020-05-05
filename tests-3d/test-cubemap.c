@@ -59,7 +59,7 @@ static GLfloat *normals;
 static GLuint *indices;
 static GLint width, height;
 
-static GLbyte vShaderStr[] =
+static const char *vShaderStr =
    "attribute vec4 a_position;   \n"
    "attribute vec3 a_normal;     \n"
    "varying vec3 v_normal;       \n"
@@ -69,7 +69,7 @@ static GLbyte vShaderStr[] =
    "   v_normal = a_normal;      \n"
    "}                            \n";
 
-static GLbyte fShaderStrCube[] =
+static const char *fShaderStrCube =
    "precision mediump float;                            \n"
    "varying vec3 v_normal;                              \n"
    "uniform samplerCube s_texture;                      \n"
@@ -78,7 +78,7 @@ static GLbyte fShaderStrCube[] =
    "  gl_FragColor = textureCube(s_texture, v_normal);  \n"
    "}                                                   \n";
 
-static GLbyte fShaderStr2d[] =
+static const char *fShaderStr2d =
    "precision mediump float;                            \n"
    "varying vec3 v_normal;                              \n"
    "uniform sampler2D s_texture;                        \n"

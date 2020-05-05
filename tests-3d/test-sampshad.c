@@ -213,7 +213,7 @@ static void test(unsigned w, unsigned h, GLenum ifmt, GLenum fmt, GLenum type, G
 			"sample", "sample2", "sample3", "sample4",
 			"mask", "mask2",
 	};
-	char * const fs[] = {
+	const char * fs[] = {
 			fragment_shader_source, fragment_shader_source_cent,
 			fragment_shader_source_off, fragment_shader_source_off2,
 			fragment_shader_source_samp,

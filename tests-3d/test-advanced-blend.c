@@ -246,7 +246,8 @@ static void test_advanced_blend(int mode, GLenum blend)
 	link_program(program);
 
 	if (env2u("TEX")) {
-		GLint handle, tex;
+		GLint handle;
+		GLuint tex;
 
 		GCHK(handle = glGetUniformLocation(program, "uTex2D0"));
 		GCHK(glGenTextures(1, &tex));

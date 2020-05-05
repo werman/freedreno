@@ -113,6 +113,7 @@ static void test(unsigned w, unsigned h, int tex_msaa, unsigned samples, int num
 	ECHK(eglMakeCurrent(display, surface, surface, context));
 
 	PFNGLFRAMEBUFFERTEXTURE2DMULTISAMPLEEXTPROC glFramebufferTexture2DMultisampleEXT =
+		(PFNGLFRAMEBUFFERTEXTURE2DMULTISAMPLEEXTPROC)
 			eglGetProcAddress("glFramebufferTexture2DMultisampleEXT");
 
 	assert(glFramebufferTexture2DMultisampleEXT);
