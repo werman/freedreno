@@ -487,6 +487,30 @@ LOCAL_CFLAGS := -DBIONIC -std=c99
 LOCAL_LDLIBS := -llog -lc -ldl -lEGL -lGLESv3
 include $(BUILD_EXECUTABLE)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE    := test-viewport
+LOCAL_SRC_FILES := tests-3d/test-viewport.c
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+LOCAL_CFLAGS := -DBIONIC -std=c99
+LOCAL_LDLIBS := -llog -lc -ldl -lEGL -lGLESv3
+include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := test-vs-gs-feedback
+LOCAL_SRC_FILES := tests-3d/test-vs-gs-feedback.c
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+LOCAL_CFLAGS := -DBIONIC -std=c99
+LOCAL_LDLIBS := -llog -lc -ldl -lEGL -lGLESv3
+include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE    := test-tf-pause-resume
+LOCAL_SRC_FILES := tests-3d/test-tf-pause-resume.c
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+LOCAL_CFLAGS := -DBIONIC -std=c99
+LOCAL_LDLIBS := -llog -lc -ldl -lEGL -lGLESv3
+include $(BUILD_EXECUTABLE)
+
 #
 # 2D Test Apps:
 #
@@ -567,35 +591,35 @@ include $(BUILD_EXECUTABLE)
 # CL Test Apps:
 #
 
-include $(CLEAR_VARS)
-# TODO this needs to be diff for 32 vs 64 bit
-P = ~/src/db820c/z4/system-z4-full
-LOCAL_MODULE    := test-imagecl
-LOCAL_SRC_FILES := tests-cl/test-imagecl.c tests-cl/shim.c
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
-LOCAL_CFLAGS := -DBIONIC
-LOCAL_LDLIBS := -lc -lc++ -ldl -llog -lm
-LOCAL_LDLIBS := $(P)/vendor/lib64/libOpenCL.so -rpath $(P)/vendor/lib64 -rpath $(P)/lib64
-include $(BUILD_EXECUTABLE)
+# include $(CLEAR_VARS)
+# # TODO this needs to be diff for 32 vs 64 bit
+# P = /home/danylo/android_pulled/pixel3
+# LOCAL_MODULE    := test-imagecl
+# LOCAL_SRC_FILES := tests-cl/test-imagecl.c tests-cl/shim.c
+# LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+# LOCAL_CFLAGS := -DBIONIC
+# LOCAL_LDLIBS := -lc -lc++ -ldl -llog -lm
+# LOCAL_LDLIBS := $(P)/vendor/lib64/libOpenCL.so -rpath $(P)/vendor/lib64 -rpath $(P)/lib64
+# include $(BUILD_EXECUTABLE)
 
-include $(CLEAR_VARS)
-# TODO this needs to be diff for 32 vs 64 bit
-P = ~/src/db820c/z4/system-z4-full
-LOCAL_MODULE    := test-kernel
-LOCAL_SRC_FILES := tests-cl/test-kernel.c tests-cl/shim.c
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
-LOCAL_CFLAGS := -DBIONIC
-LOCAL_LDLIBS := -lc -lc++ -ldl -llog -lm
-LOCAL_LDLIBS := $(P)/vendor/lib64/libOpenCL.so -rpath $(P)/vendor/lib64 -rpath $(P)/lib64
-include $(BUILD_EXECUTABLE)
+# include $(CLEAR_VARS)
+# # TODO this needs to be diff for 32 vs 64 bit
+# P = /home/danylo/android_pulled/pixel3
+# LOCAL_MODULE    := test-kernel
+# LOCAL_SRC_FILES := tests-cl/test-kernel.c tests-cl/shim.c
+# LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+# LOCAL_CFLAGS := -DBIONIC
+# LOCAL_LDLIBS := -lc -lc++ -ldl -llog -lm
+# LOCAL_LDLIBS := $(P)/vendor/lib64/libOpenCL.so -rpath $(P)/vendor/lib64 -rpath $(P)/lib64
+# include $(BUILD_EXECUTABLE)
 
-include $(CLEAR_VARS)
-# TODO this needs to be diff for 32 vs 64 bit
-P = ~/src/db820c/z4/system-z4-full
-LOCAL_MODULE    := test-simple
-LOCAL_SRC_FILES := tests-cl/test-simple.c tests-cl/shim.c
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
-LOCAL_CFLAGS := -DBIONIC
-LOCAL_LDLIBS := -lc -lc++ -ldl -llog -lm
-LOCAL_LDLIBS := $(P)/vendor/lib64/libOpenCL.so -rpath $(P)/vendor/lib64 -rpath $(P)/lib64
-include $(BUILD_EXECUTABLE)
+# include $(CLEAR_VARS)
+# # TODO this needs to be diff for 32 vs 64 bit
+# P = /home/danylo/android_pulled/pixel3
+# LOCAL_MODULE    := test-simple
+# LOCAL_SRC_FILES := tests-cl/test-simple.c tests-cl/shim.c
+# LOCAL_C_INCLUDES := $(LOCAL_PATH)/includes $(LOCAL_PATH)/util
+# LOCAL_CFLAGS := -DBIONIC
+# LOCAL_LDLIBS := -lc -lc++ -ldl -llog -lm
+# LOCAL_LDLIBS := $(P)/vendor/lib64/libOpenCL.so -rpath $(P)/vendor/lib64 -rpath $(P)/lib64
+# include $(BUILD_EXECUTABLE)

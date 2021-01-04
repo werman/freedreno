@@ -71,7 +71,10 @@ TESTS_3D = \
 	test-triangle-smoothed \
 	test-ubwc \
 	test-varyings \
-	test-vertex
+	test-vertex \
+	test-viewport \
+	test-vs-gs-feedback \
+	test-tf-pause-resume
 
 TESTS_CL = \
 	test-simple \
